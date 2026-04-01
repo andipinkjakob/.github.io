@@ -305,16 +305,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbxS_JemNRCIT6u43FFBYh01GVITHBvPsR-QF6xzs0f2DcKEJi3J15lysUTquHWgnyRhnA/exec';
+const API = 'https://script.google.com/macros/s/AKfycbzmHb-MNSAnmqpGg29S30SwVVpO3XNyx5epxHyIfyhlP9SGB7Rx7uibdeFZ6Lz82CXL/exec';
 
-// ── API: alles über GET (wie im LTB Monitor) ──────────────────────────────
+// ── API: alles über GET (exakt wie Rezept-Organizer) ─────────────────────
 async function apiGet(params) {
+  if (!API) return null;
   const url = API + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now();
   try {
-    const res = await fetch(url, { mode: 'cors' });
+    const res = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',
+      credentials: 'omit',
+      referrerPolicy: 'no-referrer'
+    });
     return await res.json();
   } catch(e) {
-    console.error('API Fehler:', e);
+    console.warn('Sheets API Fehler:', e);
     return null;
   }
 }
