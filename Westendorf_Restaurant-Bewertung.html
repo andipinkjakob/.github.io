@@ -305,20 +305,22 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzmHb-MNSAnmqpGg29S30SwVVpO3XNyx5epxHyIfyhlP9SGB7Rx7uibdeFZ6Lz82CXL/exec';
+const API = 'https://script.google.com/macros/s/AKfycbyxFRaouhYwUpY1-_sQag16If_VBv7soUnPF5oSrx46r7XrNJnD0S1PI72VXxqdVU9p8Q/exec';
 
-// ── API: alles über GET (exakt wie Rezept-Organizer) ─────────────────────
+// ── API: alles über GET (exakt wie Rezept-Organizer V2.4) ────────────────
 async function apiGet(params) {
   if (!API) return null;
   const url = API + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now();
   try {
     const res = await fetch(url, {
       method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer'
+      redirect: 'follow',
+      credentials: 'omit'
     });
-    return await res.json();
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text || text.trim() === '') return null;
+    return JSON.parse(text);
   } catch(e) {
     console.warn('Sheets API Fehler:', e);
     return null;
