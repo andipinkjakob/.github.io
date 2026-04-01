@@ -354,7 +354,16 @@ const $=id=>document.getElementById(id);
 const v=id=>$(id)?.value.trim()||'';
 const star=n=>n?'★'.repeat(n)+'☆'.repeat(5-n):'–';
 const getStar=name=>{const c=document.querySelector(`input[name="${name}"]:checked`);return c?+c.value:null;};
-const avg=(id)=>{const rs=ratings.filter(r=>r.rid===id&&r.year===year&&r.g);if(!rs.length)return null;return(rs.reduce((a,b)=>a+b.g,0)/rs.length).toFixed(1);};
+const avg=(id)=>{
+  const rest=rests.find(x=>x.id===id);
+  const rs=ratings.filter(r=>{
+    const byId = r.rid===id || Number(r.restaurantId)===id;
+    const byName = rest && (r.restaurantName===rest.name || r.restName===rest.name);
+    return (byId||byName) && String(r.year)===String(year) && (r.g||r.gesamt);
+  });
+  if(!rs.length)return null;
+  return(rs.reduce((a,b)=>a+(b.g||b.gesamt||0),0)/rs.length).toFixed(1);
+};
 
 function toast(msg,err){const t=$('toast');t.textContent=msg;t.style.background=err?'var(--rust)':'var(--pine)';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
 
@@ -383,7 +392,7 @@ function fillSelects(){
 function renderCards(){
   const g=$('quickCards');g.innerHTML='';fillSelects();
   rests.forEach(r=>{
-    const a=avg(r.id),cnt=ratings.filter(x=>x.rid===r.id&&x.year===year).length;
+    const a=avg(r.id),cnt=ratings.filter(x=>(x.rid===r.id||Number(x.restaurantId)===r.id||x.restaurantName===r.name||x.restName===r.name)&&String(x.year)===String(year)).length;
     const d=document.createElement('div');d.className='card';
     d.innerHTML=`<h3>${r.name}</h3><div class="cat">${r.cat}</div>
       <div style="margin-bottom:.6rem">${a?`<span class="sd">${star(Math.round(a))}</span> <span style="font-size:.78rem;color:#888">${a}/5 · ${cnt} Bew.</span>`:'<span style="color:#aaa;font-size:.8rem">Noch keine Bewertungen</span>'}</div>
@@ -397,7 +406,7 @@ function renderRestList(){
   const l=$('restList');l.innerHTML='';
   const cats=['Hütte','Restaurant','Après-Ski Bar','Pizzeria','Steakhouse','Sonstiges'];
   rests.forEach(r=>{
-    const a=avg(r.id),cnt=ratings.filter(x=>x.rid===r.id&&x.year===year).length;
+    const a=avg(r.id),cnt=ratings.filter(x=>(x.rid===r.id||Number(x.restaurantId)===r.id||x.restaurantName===r.name||x.restName===r.name)&&String(x.year)===String(year)).length;
     const opts=cats.map(c=>`<option${c===r.cat?' selected':''}>${c}</option>`).join('');
     const d=document.createElement('div');d.className='card';
     d.innerHTML=`
@@ -523,6 +532,7 @@ async function loadRatings(){
     bewerter: String(r['Bewerter']||r.bewerter||''),
     rid: Number(r['RestaurantID']||r.restaurantId||0),
     restaurantName: String(r['Restaurant']||r.restaurantName||''),
+    restName: String(r['Restaurant']||r.restaurantName||''),
     restaurantId: Number(r['RestaurantID']||r.restaurantId||0),
     gesamt: Number(r['Gesamt']||r.gesamt||0),
     g: Number(r['Gesamt']||r.gesamt||0),
