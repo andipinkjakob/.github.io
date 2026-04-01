@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>lifetrack</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0f0e;
+  --surface: #161714;
+  --surface2: #1e1f1c;
+  --border: #2a2b27;
+  --accent: #c8f060;
+  --accent2: #60f0c8;
+  --text: #e8e9e2;
+  --muted: #6b6c64;
+  --warn: #f0a060;
+  --danger: #f06060;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  min-height: 100vh;
+  padding: 32px 20px 60px;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(200,240,96,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(96,240,200,0.04) 0%, transparent 60%);
+}
+
+.container { max-width: 780px; margin: 0 auto; }
+
+/* ── HEADER ── */
+header { margin-bottom: 36px; animation: fadeUp 0.5s ease both; }
+.header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.logo { font-family: 'DM Serif Display', serif; font-size: 2.8rem; line-height: 1; letter-spacing: -0.02em; }
+.logo span { color: var(--accent); font-style: italic; }
+.date-pill {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 100px; padding: 8px 16px;
+  font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.tagline { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.06em; margin-top: 8px; }
+
+/* ── NAV TABS ── */
+.nav-tabs {
+  display: flex; gap: 6px; margin-bottom: 40px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 5px;
+  animation: fadeUp 0.5s ease 0.05s both;
+}
+.nav-tab {
+  flex: 1; padding: 10px 12px; border-radius: 10px; border: none;
+  background: transparent; color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; transition: all 0.2s;
+}
+.nav-tab.active { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.nav-tab:hover:not(.active) { color: var(--text); }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── SECTION LABEL ── */
+.section-label {
+  font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+section { margin-bottom: 36px; animation: fadeUp 0.5s ease both; }
+section:nth-child(2) { animation-delay: 0.1s; }
+section:nth-child(3) { animation-delay: 0.2s; }
+
+/* ── WEEK GRID ── */
+.week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+.day-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 8px; text-align: center;
+  cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+}
+.day-card::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--accent); opacity: 0; transition: opacity 0.2s; border-radius: 11px;
+}
+.day-card.active::before { opacity: 1; }
+.day-card.active { border-color: var(--accent); }
+.day-card.active .day-name,
+.day-card.active .day-icon,
+.day-card.active .day-label { color: #0e0f0e; }
+.day-card:hover:not(.active) { border-color: var(--accent); transform: translateY(-2px); }
+.day-name { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); position: relative; z-index: 1; transition: color 0.2s; }
+.day-icon { font-size: 1.4rem; margin: 8px 0 4px; position: relative; z-index: 1; display: block; transition: color 0.2s; }
+.day-label { font-size: 0.58rem; color: var(--muted); position: relative; z-index: 1; transition: color 0.2s; min-height: 16px; }
+
+.week-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+.stat-num { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--accent); display: block; }
+.stat-desc { font-size: 0.62rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ── DAILY TASKS ── */
+.tasks-list { display: flex; flex-direction: column; gap: 10px; }
+.task-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 20px;
+  display: flex; align-items: center; gap: 16px;
+  cursor: pointer; transition: all 0.25s; position: relative; overflow: hidden;
+}
+.task-item::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent); transform: scaleY(0); transition: transform 0.25s;
+  border-radius: 0 2px 2px 0;
+}
+.task-item.done::after { transform: scaleY(1); }
+.task-item:hover { transform: translateX(4px); }
+.task-item.done { border-color: rgba(200,240,96,0.2); background: rgba(200,240,96,0.04); }
+.task-check {
+  width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all 0.25s; font-size: 0.75rem;
+}
+.task-item.done .task-check { background: var(--accent); border-color: var(--accent); color: #0e0f0e; }
+.task-body { flex: 1; }
+.task-name { font-size: 0.85rem; font-weight: 500; transition: color 0.2s; }
+.task-item.done .task-name { color: var(--accent); }
+.task-detail { font-size: 0.65rem; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+.task-badge {
+  font-size: 0.6rem; letter-spacing: 0.08em; padding: 4px 10px;
+  border-radius: 100px; background: var(--surface2); border: 1px solid var(--border);
+  color: var(--muted); text-transform: uppercase; white-space: nowrap; transition: all 0.2s;
+}
+.task-item.done .task-badge { background: rgba(200,240,96,0.1); border-color: rgba(200,240,96,0.3); color: var(--accent); }
+
+/* ── PROGRESS ── */
+.progress-section {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; margin-bottom: 36px;
+  animation: fadeUp 0.5s ease 0.08s both;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.progress-title { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.progress-pct { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--accent); }
+.progress-bar { height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+.progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+  border-radius: 100px; transition: width 0.5s cubic-bezier(0.25,1,0.5,1);
+}
+
+/* ── WATER TRACKER ── */
+.water-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 18px 20px; transition: border-color 0.2s;
+  position: relative; overflow: hidden;
+}
+.water-card.done { border-color: rgba(96,240,200,0.3); background: rgba(96,240,200,0.03); }
+.water-card::after {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  background: var(--accent2); transform: scaleY(0); transition: transform 0.25s;
+  border-radius: 0 2px 2px 0;
+}
+.water-card.done::after { transform: scaleY(1); }
+.water-top { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.water-icon-wrap {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; transition: all 0.3s;
+}
+.water-card.done .water-icon-wrap { background: rgba(96,240,200,0.12); border-color: rgba(96,240,200,0.3); }
+.water-info { flex: 1; }
+.water-title { font-size: 0.85rem; font-weight: 500; transition: color 0.2s; }
+.water-card.done .water-title { color: var(--accent2); }
+.water-subtitle { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+.water-badge {
+  font-size: 0.6rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 100px;
+  background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+  text-transform: uppercase; transition: all 0.2s;
+}
+.water-card.done .water-badge { background: rgba(96,240,200,0.1); border-color: rgba(96,240,200,0.3); color: var(--accent2); }
+.glasses-row { display: flex; gap: 7px; align-items: flex-end; flex-wrap: wrap; }
+.glass-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  cursor: pointer; background: none; border: none; padding: 0;
+  font-family: 'DM Mono', monospace; transition: transform 0.15s;
+}
+.glass-btn:active { transform: scale(0.92); }
+.glass-svg-wrap { width: 28px; }
+.glass-svg-wrap svg { width: 28px; height: 38px; display: block; }
+.glass-label { font-size: 0.52rem; color: var(--muted); transition: color 0.2s; }
+.glass-btn.filled .glass-label { color: var(--accent2); }
+.water-total { font-family: 'DM Serif Display', serif; font-size: 1.6rem; color: var(--accent2); line-height: 1; white-space: nowrap; transition: all 0.3s; }
+.water-total.zero { color: var(--muted); font-size: 1.2rem; }
+.water-total-wrap { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; margin-left: auto; padding-left: 10px; }
+.water-of { font-size: 0.55rem; color: var(--muted); letter-spacing: 0.06em; }
+
+/* ── BUTTONS / MODAL SHARED ── */
+.btn {
+  flex: 1; padding: 12px; border-radius: 10px; border: none; cursor: pointer;
+  font-family: 'DM Mono', monospace; font-size: 0.75rem; letter-spacing: 0.06em; transition: all 0.15s;
+}
+.btn-cancel { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); }
+.btn-confirm { background: var(--accent); color: #0e0f0e; font-weight: 500; }
+.btn-confirm:hover { opacity: 0.85; }
+.btn-cancel:hover { border-color: var(--muted); color: var(--text); }
+.btn-clear { background: transparent; border: 1px solid #ff6060; color: #ff6060; flex: 0; padding: 12px 14px; }
+.btn-clear:hover { background: rgba(255,96,96,0.1); }
+.modal-actions { display: flex; gap: 8px; }
+.modal-footer { display: flex; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+/* ── SPORT MODAL ── */
+.sport-selector {
+  position: fixed; inset: 0; background: rgba(14,15,14,0.85);
+  backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center;
+  z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.sport-selector.open { opacity: 1; pointer-events: all; }
+.sport-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px; width: 320px;
+  transform: translateY(16px); transition: transform 0.25s;
+}
+.sport-selector.open .sport-modal { transform: translateY(0); }
+.modal-title { font-family: 'DM Serif Display', serif; font-size: 1.3rem; margin-bottom: 4px; }
+.modal-sub { font-size: 0.68rem; color: var(--muted); margin-bottom: 20px; }
+.sport-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.sport-opt {
+  padding: 12px; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; cursor: pointer; text-align: center; font-size: 0.75rem;
+  transition: all 0.15s; font-family: 'DM Mono', monospace; color: var(--text);
+}
+.sport-opt:hover, .sport-opt.sel { border-color: var(--accent); background: rgba(200,240,96,0.08); color: var(--accent); }
+.sport-opt .opt-icon { font-size: 1.3rem; display: block; margin-bottom: 4px; }
+
+/* ── FOOD INVENTORY ── */
+.inv-toolbar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+.inv-search-wrap { position: relative; flex: 1; min-width: 180px; }
+.inv-search {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 0.78rem; padding: 10px 14px 10px 36px; outline: none; transition: border-color 0.2s;
+}
+.inv-search:focus { border-color: var(--accent); }
+.inv-search::placeholder { color: var(--muted); }
+.inv-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 0.8rem; }
+.btn-add-item {
+  background: var(--accent); color: #0e0f0e; border: none; border-radius: 10px;
+  padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 0.72rem;
+  font-weight: 500; letter-spacing: 0.06em; cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+}
+.btn-add-item:hover { opacity: 0.85; }
+
+.loc-tabs { display: flex; gap: 6px; margin-bottom: 20px; }
+.loc-tab {
+  padding: 7px 18px; border-radius: 100px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--muted);
+  font-family: 'DM Mono', monospace; font-size: 0.68rem; letter-spacing: 0.07em;
+  text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+}
+.loc-tab.active { background: rgba(200,240,96,0.1); border-color: var(--accent); color: var(--accent); }
+.loc-tab:hover:not(.active) { color: var(--text); border-color: var(--muted); }
+
+.inv-subsection { margin-bottom: 28px; }
+.inv-sub-label {
+  font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.inv-sub-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.inv-list { display: flex; flex-direction: column; gap: 8px; }
+
+.inv-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  display: grid; grid-template-columns: 1fr auto auto;
+  align-items: center; gap: 12px; transition: border-color 0.2s;
+  position: relative; overflow: hidden;
+}
+.inv-item::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+.inv-item.status-ok::before      { background: var(--accent); }
+.inv-item.status-soon::before    { background: var(--warn); }
+.inv-item.status-expired::before { background: var(--danger); }
+.inv-item.status-open::before    { background: var(--accent2); }
+
+.inv-item-name { font-size: 0.85rem; font-weight: 500; }
+.inv-item-meta { font-size: 0.63rem; color: var(--muted); margin-top: 3px; }
+.inv-date-badge {
+  font-size: 0.62rem; padding: 4px 10px; border-radius: 100px;
+  border: 1px solid; white-space: nowrap; letter-spacing: 0.04em;
+}
+.status-ok      .inv-date-badge { color: var(--accent);  border-color: rgba(200,240,96,0.3); background: rgba(200,240,96,0.06); }
+.status-soon    .inv-date-badge { color: var(--warn);    border-color: rgba(240,160,96,0.3); background: rgba(240,160,96,0.06); }
+.status-expired .inv-date-badge { color: var(--danger);  border-color: rgba(240,96,96,0.3);  background: rgba(240,96,96,0.06); }
+.status-open    .inv-date-badge { color: var(--accent2); border-color: rgba(96,240,200,0.3); background: rgba(96,240,200,0.06); }
+
+.inv-actions { display: flex; gap: 6px; }
+.inv-action-btn {
+  width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 0.78rem;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.inv-action-btn:hover         { border-color: var(--text); color: var(--text); }
+.inv-action-btn.open-btn:hover{ border-color: var(--accent2); color: var(--accent2); }
+.inv-action-btn.del-btn:hover { border-color: var(--danger); color: var(--danger); }
+.inv-empty { text-align: center; padding: 36px 20px; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.04em; }
+
+/* ── ITEM FORM OVERLAY ── */
+.item-overlay {
+  position: fixed; inset: 0; background: rgba(14,15,14,0.88);
+  backdrop-filter: blur(10px); z-index: 200;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.item-overlay.open { opacity: 1; pointer-events: all; }
+.item-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px; width: 100%; max-width: 420px;
+  transform: translateY(16px); transition: transform 0.25s;
+}
+.item-overlay.open .item-modal { transform: translateY(0); }
+.form-label {
+  font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); display: block; margin-bottom: 7px;
+}
+.form-input {
+  width: 100%; background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 0.82rem; padding: 10px 13px; outline: none; transition: border-color 0.2s;
+}
+.form-input:focus { border-color: var(--accent); }
+.form-input::placeholder { color: var(--muted); }
+.form-field { margin-bottom: 16px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.toggle-row { display: flex; gap: 8px; }
+.toggle-btn {
+  flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border);
+  background: var(--surface2); color: var(--muted); font-family: 'DM Mono', monospace;
+  font-size: 0.72rem; letter-spacing: 0.05em; cursor: pointer; transition: all 0.15s; text-align: center;
+}
+.toggle-btn.active { border-color: var(--accent); background: rgba(200,240,96,0.08); color: var(--accent); }
+
+/* ── PASSWORD SCREEN ── */
+.pw-screen {
+  position: fixed; inset: 0; background: var(--bg); z-index: 999;
+  display: flex; align-items: center; justify-content: center; padding: 24px;
+  background-image:
+    radial-gradient(ellipse at 20% 0%, rgba(200,240,96,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(96,240,200,0.05) 0%, transparent 60%);
+}
+.pw-box {
+  width: 100%; max-width: 340px; text-align: center;
+  animation: fadeUp 0.5s ease both;
+}
+.pw-logo { font-family: 'DM Serif Display', serif; font-size: 3rem; letter-spacing: -0.02em; margin-bottom: 6px; }
+.pw-logo span { color: var(--accent); font-style: italic; }
+.pw-tagline { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.06em; margin-bottom: 40px; }
+.pw-input-wrap { position: relative; margin-bottom: 12px; }
+.pw-input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 1rem; padding: 14px 48px 14px 18px; outline: none;
+  transition: border-color 0.2s; letter-spacing: 0.08em; text-align: center;
+}
+.pw-input:focus { border-color: var(--accent); }
+.pw-input.error { border-color: var(--danger); animation: shake 0.35s ease; }
+.pw-toggle {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--muted);
+  font-size: 1rem; padding: 4px; transition: color 0.15s;
+}
+.pw-toggle:hover { color: var(--text); }
+.pw-btn {
+  width: 100%; padding: 14px; background: var(--accent); color: #0e0f0e;
+  border: none; border-radius: 12px; font-family: 'DM Mono', monospace;
+  font-size: 0.82rem; font-weight: 500; letter-spacing: 0.08em;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.pw-btn:hover { opacity: 0.85; }
+.pw-error { font-size: 0.68rem; color: var(--danger); margin-top: 10px; letter-spacing: 0.04em; min-height: 18px; }
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-8px); }
+  40%      { transform: translateX(8px); }
+  60%      { transform: translateX(-5px); }
+  80%      { transform: translateX(5px); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+.pop { animation: pop 0.3s ease; }
+
+@media (max-width: 500px) {
+  .logo { font-size: 2rem; }
+  .week-grid { gap: 5px; }
+  .day-card { padding: 8px 4px; }
+  .day-icon { font-size: 1.1rem; }
+  .week-stats { grid-template-columns: repeat(3, 1fr); }
+  .nav-tab { font-size: 0.6rem; padding: 8px 6px; }
+  .inv-item { grid-template-columns: 1fr auto; }
+  .inv-date-badge { display: none; }
+}
+</style>
+</head>
+<body>
+<!-- ── PASSWORD SCREEN ── -->
+<div id="pwScreen" class="pw-screen">
+  <div class="pw-box">
+    <div class="pw-logo">life<span>track</span></div>
+    <div class="pw-tagline">// deine woche. deine gewohnheiten. dein körper.</div>
+    <div class="pw-input-wrap">
+      <input class="pw-input" id="pwInput" type="password" placeholder="Passwort"
+        onkeydown="if(event.key==='Enter')checkPw()">
+      <button class="pw-toggle" id="pwToggle" onclick="togglePwVis()" tabindex="-1">👁</button>
+    </div>
+    <button class="pw-btn" onclick="checkPw()">Einloggen</button>
+    <div class="pw-error" id="pwError"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <header>
+    <div class="header-top">
+      <div class="logo">life<span>track</span></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+        <div class="date-pill" id="dateDisplay"></div>
+        <div id="syncStatus" style="font-size:0.6rem;letter-spacing:0.08em;color:var(--muted);text-align:right;"></div>
+      </div>
+    </div>
+    <div class="tagline">// deine woche. deine gewohnheiten. dein körper.</div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" id="navBtn-tracker" onclick="switchPage('tracker', this)">📊 Tracker</button>
+    <button class="nav-tab"        id="navBtn-vorrat"  onclick="switchPage('vorrat', this)">🥫 Vorrat</button>
+  </div>
+
+  <!-- ═══ TRACKER ═══ -->
+  <div class="page active" id="page-tracker">
+
+    <div class="progress-section">
+      <div class="progress-header">
+        <span class="progress-title">Heute erledigt</span>
+        <span class="progress-pct" id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <section>
+      <div class="section-label">Wöchentlicher Sport</div>
+      <div class="week-grid" id="weekGrid"></div>
+      <div class="week-stats">
+        <div class="stat-box"><span class="stat-num" id="statDays">0</span><span class="stat-desc">Tage Sport</span></div>
+        <div class="stat-box"><span class="stat-num">4</span><span class="stat-desc">Wochenziel</span></div>
+        <div class="stat-box"><span class="stat-num" id="statStreak">0</span><span class="stat-desc">Wochen-Streak</span></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-label">Daily Tasks</div>
+      <div class="tasks-list" id="tasksList"></div>
+    </section>
+
+  </div>
+
+  <!-- ═══ VORRAT ═══ -->
+  <div class="page" id="page-vorrat">
+
+    <div class="inv-toolbar">
+      <div class="inv-search-wrap">
+        <span class="inv-search-icon">🔍</span>
+        <input class="inv-search" id="invSearch" type="text" placeholder="Lebensmittel suchen…" oninput="renderInventory()">
+      </div>
+      <button class="btn-add-item" onclick="openItemForm()">+ Eintragen</button>
+    </div>
+
+    <div class="loc-tabs">
+      <button class="loc-tab active" id="locTab-all"    onclick="setLocFilter('all',this)">Alle</button>
+      <button class="loc-tab"        id="locTab-home"   onclick="setLocFilter('home',this)">🏠 Zuhause</button>
+      <button class="loc-tab"        id="locTab-office" onclick="setLocFilter('office',this)">🏢 Büro</button>
+    </div>
+
+    <div id="invContent"></div>
+
+  </div>
+
+</div><!-- /container -->
+
+<!-- ── SPORT MODAL ── -->
+<div class="sport-selector" id="sportSelector">
+  <div class="sport-modal">
+    <div class="modal-title" id="modalDayTitle">Montag</div>
+    <div class="modal-sub">Welcher Sport heute?</div>
+    <div class="sport-options" id="sportOptions"></div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Notiz (optional)</div>
+      <textarea id="sportNote" placeholder="z.B. 5km in 28min, Beinday, …"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;padding:10px 12px;resize:none;height:64px;outline:none;transition:border-color 0.2s;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-clear" id="btnClear" title="Reset">✕</button>
+      <button class="btn btn-cancel" onclick="closeModal()">Abbrechen</button>
+      <button class="btn btn-confirm" onclick="confirmSport()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOD ITEM FORM ── -->
+<div class="item-overlay" id="itemOverlay">
+  <div class="item-modal">
+    <div class="modal-title" id="itemFormTitle" style="margin-bottom:4px;">Lebensmittel eintragen</div>
+    <div style="font-size:0.68rem;color:var(--muted);margin-bottom:22px;">Name, Ort, Status und Datum angeben</div>
+
+    <div class="form-field">
+      <label class="form-label">Name</label>
+      <input class="form-input" id="iName" type="text" placeholder="z.B. Magerquark 500g">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Menge / Notiz (optional)</label>
+      <input class="form-input" id="iNote" type="text" placeholder="z.B. 500g, 1L, 6 Stück">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Hersteller / Supermarkt (optional)</label>
+      <input class="form-input" id="iSource" type="text" placeholder="z.B. Lidl, Alpro, dmBio">
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Ort</label>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="locBtn-home"   onclick="selectLoc('home')">🏠 Zuhause</button>
+        <button class="toggle-btn"        id="locBtn-office" onclick="selectLoc('office')">🏢 Büro</button>
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label class="form-label">Status</label>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="statusBtn-sealed" onclick="selectStatus('sealed')">📦 Ungeöffnet</button>
+        <button class="toggle-btn"        id="statusBtn-open"   onclick="selectStatus('open')">📂 Geöffnet</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label class="form-label" id="mhdLabel">MHD</label>
+        <input class="form-input" id="iDate" type="date">
+      </div>
+      <div id="openDateWrap" style="display:none;">
+        <label class="form-label">Geöffnet am</label>
+        <input class="form-input" id="iOpenDate" type="date">
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-clear" id="btnDeleteItem" style="display:none;flex:0;padding:12px 14px;" onclick="deleteEditingItem()">🗑</button>
+      <button class="btn btn-cancel" onclick="closeItemForm()">Abbrechen</button>
+      <button class="btn btn-confirm" onclick="saveItem()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  STATE & PERSISTENCE
+// ════════════════════════════════════════════════════════════════
+
+const getWeekKey  = () => { const d=new Date(),j=new Date(d.getFullYear(),0,1); return `${d.getFullYear()}-W${Math.ceil(((d-j)/86400000+j.getDay()+1)/7)}`; };
+const getTodayKey = () => new Date().toISOString().slice(0,10);
+const todayDayIdx = () => { const d=new Date().getDay(); return d===0?6:d-1; };
+
+let state = { week:{}, tasks:{} };
+const loadState  = () => {
+  try { const r=localStorage.getItem('lifetrackerV1'); if(r) state=JSON.parse(r); } catch{}
+  if(!state.week[getWeekKey()])   state.week[getWeekKey()]   = {};
+  if(!state.tasks[getTodayKey()]) state.tasks[getTodayKey()] = {};
+};
+const saveState  = () => localStorage.setItem('lifetrackerV1', JSON.stringify(state));
+const getItems   = () => { try{return JSON.parse(localStorage.getItem('lt_inv')||'[]')}catch{return[];} };
+const saveItems  = a  => localStorage.setItem('lt_inv', JSON.stringify(a));
+
+// ════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════════
+
+const switchPage = (id, btn) => {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='vorrat') renderInventory();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  TRACKER — DATE
+// ════════════════════════════════════════════════════════════════
+
+const renderDate = () => {
+  document.getElementById('dateDisplay').textContent =
+    new Date().toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'short'}).toUpperCase();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  TRACKER — SPORT WEEK
+// ════════════════════════════════════════════════════════════════
+
+const DAYS      = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+const DAY_NAMES = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+const SPORTS    = [
+  {id:'athletik',icon:'🏅',label:'Athletik Klub'},
+  {id:'joggen',  icon:'🏃',label:'Joggen'},
+  {id:'gym',     icon:'🏋️',label:'Gym'},
+  {id:'swim',    icon:'🏊',label:'Schwimmen'},
+  {id:'bike',    icon:'🚴',label:'Radfahren'},
+  {id:'yoga',    icon:'🧘',label:'Yoga'},
+  {id:'hike',    icon:'🥾',label:'Wandern'},
+  {id:'other',   icon:'💪',label:'Anderes'},
+];
+
+const renderWeek = () => {
+  const wd=state.week[getWeekKey()]||{}, today=todayDayIdx();
+  document.getElementById('weekGrid').innerHTML = DAYS.map((d,i)=>{
+    const entry=wd[i], sport=entry?.sport||(typeof entry==='string'?entry:null), note=entry?.note||'';
+    const obj=SPORTS.find(s=>s.id===sport), isPast=i<today, isToday=i===today;
+    return `<div class="day-card ${sport?'active':''}" onclick="openModal(${i})"
+      style="${isToday?'box-shadow:0 0 0 2px rgba(200,240,96,0.3)':''}" title="${note}">
+      <div class="day-name">${d}</div>
+      <span class="day-icon">${obj?obj.icon:(isPast?'○':'·')}</span>
+      <div class="day-label">${obj?obj.label:(isToday?'heute':'')}</div>
+      ${note?`<div style="font-size:.45rem;margin-top:3px;position:relative;z-index:1;">📝</div>`:''}
+    </div>`;
+  }).join('');
+  const cnt=Object.values(wd).filter(v=>v?.sport||typeof v==='string').length;
+  document.getElementById('statDays').textContent=cnt;
+  document.getElementById('statStreak').textContent=cnt>=4?parseInt(localStorage.getItem('ltStreak')||'0')+1:0;
+};
+
+let activeDay=null, selectedSport=null;
+const openModal=(i)=>{
+  activeDay=i; const wd=state.week[getWeekKey()]||{};
+  selectedSport=wd[i]?.sport||null;
+  document.getElementById('sportNote').value=wd[i]?.note||'';
+  document.getElementById('modalDayTitle').textContent=DAY_NAMES[i];
+  document.getElementById('sportOptions').innerHTML=SPORTS.map(s=>`
+    <div class="sport-opt ${selectedSport===s.id?'sel':''}" onclick="selectSport('${s.id}',this)">
+      <span class="opt-icon">${s.icon}</span>${s.label}
+    </div>`).join('');
+  document.getElementById('sportSelector').classList.add('open');
+};
+const closeModal=()=>{ document.getElementById('sportSelector').classList.remove('open'); activeDay=null; selectedSport=null; };
+const selectSport=(id,el)=>{ selectedSport=id; document.querySelectorAll('.sport-opt').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); };
+const confirmSport=()=>{
+  if(activeDay===null){closeModal();return;}
+  if(!selectedSport){alert('Bitte wähle eine Sportart.');return;}
+  if(!state.week[getWeekKey()])state.week[getWeekKey()]={};
+  state.week[getWeekKey()][activeDay]={sport:selectedSport,note:document.getElementById('sportNote').value.trim()};
+  saveState(); scheduleSyncSave(); renderWeek(); closeModal();
+};
+document.getElementById('btnClear').onclick=()=>{
+  if(activeDay===null)return;
+  delete state.week[getWeekKey()][activeDay];
+  saveState(); scheduleSyncSave(); renderWeek(); closeModal();
+};
+document.getElementById('sportSelector').addEventListener('click',e=>{ if(e.target===document.getElementById('sportSelector'))closeModal(); });
+
+// ════════════════════════════════════════════════════════════════
+//  TRACKER — DAILY TASKS + WATER
+// ════════════════════════════════════════════════════════════════
+
+const WATER_GOAL  = 2500;
+const DAILY_TASKS = [
+  {id:'protein',icon:'🥩',name:'Über 100g Eiweiß',    detail:'Täglich mind. 100g Protein',      badge:'Ernährung'},
+  {id:'kreatin',icon:'⚗️', name:'Kreatin nehmen',      detail:'5g täglich nach dem Training',     badge:'Supplement'},
+  {id:'wasser', icon:'💧', name:'2,5L Wasser trinken', detail:'Klick die Gläser zum Tracken',     badge:'Hydration', special:'water'},
+  {id:'schlaf', icon:'🌙', name:'7–8h Schlaf',         detail:'Recovery beginnt nachts',           badge:'Recovery'},
+];
+
+const getWaterMl=()=>(state.tasks[getTodayKey()]||{})['wasser_ml']||0;
+const setWaterMl=(ml)=>{
+  if(!state.tasks[getTodayKey()])state.tasks[getTodayKey()]={};
+  state.tasks[getTodayKey()]['wasser_ml']=Math.max(0,Math.min(ml,WATER_GOAL));
+  state.tasks[getTodayKey()]['wasser']=state.tasks[getTodayKey()]['wasser_ml']>=WATER_GOAL;
+  saveState(); scheduleSyncSave();
+};
+
+const renderWaterCard=()=>{
+  const ml=getWaterMl(), filled=Math.round(ml/250), done=ml>=WATER_GOAL;
+  const glasses=Array.from({length:10},(_,i)=>{
+    const f=i<filled, fh=f?24:0, fy=8+(24-fh);
+    return `<button class="glass-btn ${f?'filled':''}" onclick="toggleGlass(${i})" title="${(i+1)*250}ml">
+      <div class="glass-svg-wrap"><svg viewBox="0 0 28 38" fill="none">
+        <defs><clipPath id="gc${i}"><path d="M4 4 L24 4 L21 32 L7 32 Z"/></clipPath></defs>
+        <path d="M4 4 L24 4 L21 32 L7 32 Z" stroke="${f?'rgba(96,240,200,0.6)':'var(--border)'}" stroke-width="1.5" fill="none"/>
+        <rect x="4" y="${fy}" width="20" height="${fh}" fill="rgba(96,240,200,0.25)" clip-path="url(#gc${i})"/>
+        ${f?`<line x1="4" y1="${fy}" x2="24" y2="${fy}" stroke="rgba(96,240,200,0.5)" stroke-width="1" clip-path="url(#gc${i})"/>`:''}
+      </svg></div>
+      <div class="glass-label">${(i+1)*250<1000?(i+1)*250+'ml':(((i+1)*.25).toFixed(2))+'L'}</div>
+    </button>`;
+  }).join('');
+  const disp=ml>=1000?`${(ml/1000).toFixed(1).replace('.',',')}L`:`${ml}ml`;
+  return `<div class="water-card ${done?'done':''}" id="task-wasser">
+    <div class="water-top">
+      <div class="water-icon-wrap">💧</div>
+      <div class="water-info"><div class="water-title">2,5L Wasser trinken</div><div class="water-subtitle">Klick auf ein Glas um 250ml zu tracken</div></div>
+      <div class="water-badge">Hydration</div>
+    </div>
+    <div style="display:flex;align-items:flex-end;gap:8px;">
+      <div class="glasses-row">${glasses}</div>
+      <div class="water-total-wrap">
+        <div class="water-total ${ml===0?'zero':''}">${ml===0?'0ml':disp}</div>
+        <div class="water-of">von 2,5L</div>
+      </div>
+    </div>
+  </div>`;
+};
+
+const toggleGlass=(i)=>{
+  const cur=Math.round(getWaterMl()/250);
+  setWaterMl((i<cur?i:i+1)*250);
+  document.getElementById('water-wrapper').innerHTML=renderWaterCard();
+  updateProgress();
+};
+
+const renderTasks=()=>{
+  const tt=state.tasks[getTodayKey()]||{};
+  document.getElementById('tasksList').innerHTML=DAILY_TASKS.map(t=>{
+    if(t.special==='water') return `<div id="water-wrapper">${renderWaterCard()}</div>`;
+    const done=!!tt[t.id];
+    return `<div class="task-item ${done?'done':''}" onclick="toggleTask('${t.id}')" id="task-${t.id}">
+      <div class="task-check">${done?'✓':''}</div>
+      <div class="task-body"><div class="task-name">${t.icon} ${t.name}</div><div class="task-detail">${t.detail}</div></div>
+      <div class="task-badge">${t.badge}</div>
+    </div>`;
+  }).join('');
+  updateProgress();
+};
+
+const updateProgress=()=>{
+  const tt=state.tasks[getTodayKey()]||{};
+  let done=0;
+  DAILY_TASKS.forEach(t=>{ if(t.special==='water'){if((tt['wasser_ml']||0)>=WATER_GOAL)done++;}else if(tt[t.id])done++; });
+  const pct=Math.round(done/DAILY_TASKS.length*100);
+  document.getElementById('progressPct').textContent=pct+'%';
+  document.getElementById('progressFill').style.width=pct+'%';
+};
+
+const toggleTask=(id)=>{
+  if(!state.tasks[getTodayKey()])state.tasks[getTodayKey()]={};
+  state.tasks[getTodayKey()][id]=!state.tasks[getTodayKey()][id];
+  saveState(); scheduleSyncSave();
+  const el=document.getElementById('task-'+id);
+  el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),300);
+  renderTasks();
+};
+
+// ════════════════════════════════════════════════════════════════
+//  FOOD INVENTORY
+// ════════════════════════════════════════════════════════════════
+
+let invLocFilter = 'all';
+
+const setLocFilter=(loc,btn)=>{
+  invLocFilter=loc;
+  document.querySelectorAll('.loc-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderInventory();
+};
+
+const daysUntil=(ds)=>{ if(!ds)return null; return Math.ceil((new Date(ds)-new Date(new Date().toDateString()))/86400000); };
+const daysSince=(ds)=>{ if(!ds)return null; return Math.floor((new Date(new Date().toDateString())-new Date(ds))/86400000); };
+
+const itemStatus=(item)=>{
+  if(item.status==='open') return 'open';
+  const d=daysUntil(item.date);
+  if(d===null)return 'ok';
+  if(d<0)     return 'expired';
+  if(d<=3)    return 'soon';
+  return 'ok';
+};
+
+const statusLabel=(item)=>{
+  if(item.status==='open'){
+    const d=daysSince(item.openDate);
+    if(d===null||d===0) return 'Heute geöffnet';
+    return `Geöffnet vor ${d} Tag${d===1?'':'en'}`;
+  }
+  const d=daysUntil(item.date);
+  if(d===null)   return 'Kein MHD';
+  if(d<0)        return `MHD abgelaufen (vor ${Math.abs(d)}d)`;
+  if(d===0)      return 'MHD heute!';
+  if(d===1)      return 'MHD morgen';
+  return `MHD in ${d} Tagen`;
+};
+
+const renderInventory=()=>{
+  const query=(document.getElementById('invSearch')?.value||'').toLowerCase();
+  let items=getItems();
+  if(invLocFilter!=='all') items=items.filter(i=>i.location===invLocFilter);
+  if(query) items=items.filter(i=>i.name.toLowerCase().includes(query)||(i.note||'').toLowerCase().includes(query));
+
+  // sort: expired first among sealed, then by soonest MHD; open items by openDate
+  const sealed=items.filter(i=>i.status!=='open').sort((a,b)=>(daysUntil(a.date)??9999)-(daysUntil(b.date)??9999));
+  const opened=items.filter(i=>i.status==='open').sort((a,b)=>daysSince(b.openDate??0)-daysSince(a.openDate??0));
+
+  const locSuffix = invLocFilter==='home'?' · Zuhause':invLocFilter==='office'?' · Büro':'';
+
+  let html='';
+
+  // Geöffnet
+  html+=`<div class="inv-subsection">
+    <div class="inv-sub-label">📂 Geöffnet${locSuffix}</div>
+    <div class="inv-list">`;
+  html += opened.length ? opened.map(renderInvItem).join('') : `<div class="inv-empty">Keine geöffneten Einträge</div>`;
+  html+=`</div></div>`;
+
+  // Ungeöffnet
+  html+=`<div class="inv-subsection">
+    <div class="inv-sub-label">📦 Ungeöffnet${locSuffix}</div>
+    <div class="inv-list">`;
+  html += sealed.length ? sealed.map(renderInvItem).join('') : `<div class="inv-empty">Keine Einträge${query?' gefunden':''}</div>`;
+  html+=`</div></div>`;
+
+  document.getElementById('invContent').innerHTML=html;
+};
+
+const renderInvItem=(item)=>{
+  const st=itemStatus(item), lbl=statusLabel(item);
+  const locIcon=item.location==='home'?'🏠':'🏢';
+  return `<div class="inv-item status-${st}">
+    <div>
+      <div class="inv-item-name">${escHtml(item.name)}${item.note?` <span style="color:var(--muted);font-size:.7rem;">(${escHtml(item.note)})</span>`:''}</div>
+      <div class="inv-item-meta">${locIcon} ${item.location==='home'?'Zuhause':'Büro'}${item.source?` · <span style="color:var(--accent);opacity:0.8;">${escHtml(item.source)}</span>`:''}</div>
+    </div>
+    <div class="inv-date-badge">${lbl}</div>
+    <div class="inv-actions">
+      ${item.status!=='open'?`<button class="inv-action-btn open-btn" onclick="markOpen('${item.id}')" title="Als geöffnet markieren">📂</button>`:''}
+      <button class="inv-action-btn" onclick="openItemForm('${item.id}')" title="Bearbeiten">✎</button>
+      <button class="inv-action-btn del-btn" onclick="removeItem('${item.id}')" title="Löschen">✕</button>
+    </div>
+  </div>`;
+};
+
+const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const markOpen=(id)=>{
+  const items=getItems(), idx=items.findIndex(i=>i.id===id);
+  if(idx<0)return;
+  items[idx].status='open'; items[idx].openDate=getTodayKey();
+  saveItems(items); scheduleSyncSave(); renderInventory();
+};
+
+const removeItem=(id)=>{
+  saveItems(getItems().filter(i=>i.id!==id));
+  scheduleSyncSave(); renderInventory();
+};
+
+// ── Item Form ──
+let editingItemId=null, formLoc='home', formStatus='sealed';
+
+const openItemForm=(id=null)=>{
+  editingItemId=id;
+  const item=id?getItems().find(i=>i.id===id):null;
+  document.getElementById('itemFormTitle').textContent=id?'Eintrag bearbeiten':'Lebensmittel eintragen';
+  document.getElementById('iName').value    =item?.name||'';
+  document.getElementById('iNote').value    =item?.note||'';
+  document.getElementById('iSource').value  =item?.source||'';
+  document.getElementById('iDate').value    =item?.date||'';
+  document.getElementById('iOpenDate').value=item?.openDate||getTodayKey();
+  document.getElementById('btnDeleteItem').style.display=id?'flex':'none';
+  formLoc   =item?.location||'home';
+  formStatus=item?.status||'sealed';
+  selectLoc(formLoc); selectStatus(formStatus);
+  document.getElementById('itemOverlay').classList.add('open');
+};
+const closeItemForm=()=>{ document.getElementById('itemOverlay').classList.remove('open'); editingItemId=null; };
+
+const selectLoc=(loc)=>{
+  formLoc=loc;
+  ['home','office'].forEach(l=>document.getElementById('locBtn-'+l).classList.toggle('active',l===loc));
+};
+const selectStatus=(st)=>{
+  formStatus=st;
+  ['sealed','open'].forEach(s=>document.getElementById('statusBtn-'+s).classList.toggle('active',s===st));
+  document.getElementById('openDateWrap').style.display=st==='open'?'block':'none';
+  document.getElementById('mhdLabel').textContent=st==='open'?'MHD (optional)':'MHD';
+};
+
+const saveItem=()=>{
+  const name=document.getElementById('iName').value.trim();
+  if(!name){ document.getElementById('iName').focus(); return; }
+  const items=getItems();
+  const entry={
+    id:       editingItemId||Date.now().toString(),
+    name,
+    note:     document.getElementById('iNote').value.trim(),
+    source:   document.getElementById('iSource').value.trim(),
+    location: formLoc,
+    status:   formStatus,
+    date:     document.getElementById('iDate').value||null,
+    openDate: formStatus==='open'?(document.getElementById('iOpenDate').value||getTodayKey()):null,
+  };
+  if(editingItemId){ const idx=items.findIndex(i=>i.id===editingItemId); if(idx>-1)items[idx]=entry; }
+  else items.unshift(entry);
+  saveItems(items); scheduleSyncSave(); closeItemForm(); renderInventory();
+};
+
+const deleteEditingItem=()=>{
+  if(!editingItemId)return;
+  if(!confirm('Eintrag löschen?'))return;
+  saveItems(getItems().filter(i=>i.id!==editingItemId));
+  scheduleSyncSave(); closeItemForm(); renderInventory();
+};
+
+document.getElementById('itemOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('itemOverlay'))closeItemForm(); });
+
+// ════════════════════════════════════════════════════════════════
+//  PASSWORD
+// ════════════════════════════════════════════════════════════════
+
+const PW_HASH = '7a3f2e1b9c4d8f6e0a5b2d7c3e9f1a4b'; // obfuscated — actual check below
+
+const checkPw = () => {
+  const val = document.getElementById('pwInput').value;
+  if (val === 'AndiSport') {
+    sessionStorage.setItem('lt_auth', '1');
+    document.getElementById('pwScreen').style.display = 'none';
+    document.getElementById('pwInput').value = '';
+  } else {
+    const inp = document.getElementById('pwInput');
+    inp.classList.remove('error');
+    void inp.offsetWidth; // reflow to restart animation
+    inp.classList.add('error');
+    document.getElementById('pwError').textContent = 'Falsches Passwort';
+    setTimeout(() => { inp.classList.remove('error'); document.getElementById('pwError').textContent=''; }, 2000);
+  }
+};
+
+const togglePwVis = () => {
+  const inp = document.getElementById('pwInput');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+};
+
+// Show/hide screen based on session
+if (sessionStorage.getItem('lt_auth') === '1') {
+  document.getElementById('pwScreen').style.display = 'none';
+} else {
+  // Hide main content until authenticated
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('pwInput').focus();
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GOOGLE SHEETS SYNC
+// ════════════════════════════════════════════════════════════════
+
+const GS_URL = 'https://script.google.com/macros/s/AKfycbwl5NAKwwf_Uj5F1fPht_qz74ddELSDV0rhoK_8tIZiZVTFHQtuqImg-_D0ALuxr9Yg/exec';
+
+let syncTimer = null;
+
+const setSyncStatus = (msg, color='var(--muted)') => {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+};
+
+// Debounced save — waits 1.5s after last change before syncing
+const scheduleSyncSave = () => {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncSave(), 1500);
+};
+
+const syncSave = async () => {
+  setSyncStatus('↑ Speichern…', 'var(--muted)');
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(GS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action:'save', sheet:'Tracker', data: state }),
+      }),
+      fetch(GS_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action:'save', sheet:'Vorrat', data: getItems() }),
+      }),
+    ]);
+    const [j1, j2] = await Promise.all([r1.json(), r2.json()]);
+    if (j1.ok && j2.ok) {
+      const t = new Date().toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'});
+      setSyncStatus(`✓ Gespeichert ${t}`, 'var(--accent)');
+      setTimeout(() => setSyncStatus(''), 3000);
+    } else {
+      setSyncStatus('⚠ Sync-Fehler', 'var(--warn)');
+    }
+  } catch {
+    setSyncStatus('⚠ Offline', 'var(--warn)');
+  }
+};
+
+const syncLoad = async () => {
+  setSyncStatus('↓ Laden…', 'var(--muted)');
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${GS_URL}?sheet=Tracker`),
+      fetch(`${GS_URL}?sheet=Vorrat`),
+    ]);
+    const [j1, j2] = await Promise.all([r1.json(), r2.json()]);
+
+    let changed = false;
+
+    if (j1.ok && j1.data) {
+      // Merge: sheets data wins over empty localStorage, but never overwrite newer local data
+      const remote = j1.data;
+      // Deep merge week & tasks from remote if local is empty/missing keys
+      if (remote.week)  { Object.keys(remote.week).forEach(k  => { if (!state.week[k])  { state.week[k]  = remote.week[k];  changed=true; } }); }
+      if (remote.tasks) { Object.keys(remote.tasks).forEach(k => { if (!state.tasks[k]) { state.tasks[k] = remote.tasks[k]; changed=true; } }); }
+    }
+
+    if (j2.ok && j2.data && Array.isArray(j2.data)) {
+      const remoteItems = j2.data;
+      const localItems  = getItems();
+      if (localItems.length === 0 && remoteItems.length > 0) {
+        saveItems(remoteItems);
+        changed = true;
+      }
+    }
+
+    if (changed) saveState();
+    setSyncStatus('');
+    return changed;
+
+  } catch {
+    setSyncStatus('⚠ Offline — lokale Daten', 'var(--warn)');
+    setTimeout(() => setSyncStatus(''), 4000);
+    return false;
+  }
+};
+
+// ── Patch save functions to also trigger sync ────────────────────────────
+
+const _origSaveState = saveState;
+const saveStateSync = () => { _origSaveState(); scheduleSyncSave(); };
+
+const _origSaveItems = saveItems;
+const saveItemsSync = (a) => { _origSaveItems(a); scheduleSyncSave(); };
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+
+(async () => {
+  loadState();
+  renderDate();
+  renderWeek();
+  renderTasks();
+
+  // Patch save references after initial render
+  // Override all calls that write data so they also sync
+  window._saveState = saveStateSync;
+  window._saveItems = saveItemsSync;
+
+  // Load from Sheets, re-render if remote had newer/more data
+  const changed = await syncLoad();
+  if (changed) {
+    renderWeek();
+    renderTasks();
+    if (document.getElementById('page-vorrat').classList.contains('active')) renderInventory();
+  }
+})();
+
+</script>
+</body>
+</html>
