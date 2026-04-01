@@ -707,7 +707,7 @@ let pickerSlot   = null;
 let weekOffset   = 0;
 let selectedEmoji = EMOJI_OPTIONS[0];
 
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-BQR_jmB9KfQUbCKIDQyCOfgaO760i30bMrqCRcMSKkvue9_LgqRYGmnU4eJz6heFCg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwPfuTX75_f3gjZrrNvzcM1TyEbaw7Pet-LbI9uNiUA9SoYf78grBvBOKFAJ-s-pWI41w/exec';
 const DAYS   = ['Mo','Di','Mi','Do','Fr','Sa','So'];
 const MEALS  = ['fruehstueck','mittagessen','abendessen'];
 const RECIPE_EMOJIS = ['🍳','🥗','🥘','🍲','🥧','🧁','🍰','🥞','🫕','🍜','🥙','🌮','🥣','🫔','🍱'];
@@ -1456,8 +1456,15 @@ async function apiGet(params) {
   if (!SCRIPT_URL) return null;
   const url = SCRIPT_URL + '?' + new URLSearchParams(params).toString() + '&t=' + Date.now();
   try {
-    const res = await fetch(url, { mode: 'cors' });
-    return await res.json();
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow',
+      credentials: 'omit'
+    });
+    if (!res.ok) return null;
+    const text = await res.text();
+    if (!text || text.trim() === '') return null;
+    return JSON.parse(text);
   } catch(e) {
     console.warn('Sheets API error:', e);
     return null;
