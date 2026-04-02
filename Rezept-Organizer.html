@@ -912,6 +912,7 @@ function filterCategory(cat, rowEl) {
   const c = catById(cat);
   document.getElementById('view-title').textContent = c ? `${c.emoji} ${c.label}` : 'Alle Rezepte';
   renderGrid();
+  if (typeof closeDrawer === 'function') closeDrawer();
 }
 
 // ══════════════════════════════════════════
@@ -1650,12 +1651,6 @@ function mobileSwitchTab(tab) {
   }
 }
 
-// Close drawer on category click (mobile)
-const _origFilterCategory = filterCategory;
-function filterCategory(cat, rowEl) {
-  _origFilterCategory(cat, rowEl);
-  closeDrawer();
-}
 
 // ══════════════════════════════════════════
 // TOAST
