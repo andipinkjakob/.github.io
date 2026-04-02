@@ -18,8 +18,18 @@
 
   /* ── HEADER ── */
   header{background:var(--charcoal);color:var(--cream);padding:0 2rem;display:flex;align-items:center;height:70px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px var(--shadow-md);}
-  .logo{font-family:'Playfair Display',serif;font-size:1.15rem;letter-spacing:.02em;}
+  .logo{font-family:'Playfair Display',serif;font-size:1.15rem;letter-spacing:.02em;flex:1;}
   .logo span{color:var(--terracotta-light);font-style:italic;}
+  .sync-status{display:flex;align-items:center;gap:.4rem;margin-left:auto;margin-right:1rem;cursor:default;flex-shrink:0;}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:#555;transition:background .4s,box-shadow .4s;flex-shrink:0;}
+  .sync-label{font-size:.7rem;letter-spacing:.06em;color:rgba(255,255,255,.4);white-space:nowrap;transition:color .3s;}
+  .sync-status.loading .sync-dot{background:#F5A623;box-shadow:0 0 6px #F5A623;animation:syncPulse .8s ease-in-out infinite alternate;}
+  .sync-status.loading .sync-label{color:#F5A623;}
+  .sync-status.ok .sync-dot{background:#7A9E7E;box-shadow:0 0 6px rgba(122,158,126,.6);}
+  .sync-status.ok .sync-label{color:rgba(122,158,126,.9);}
+  .sync-status.error .sync-dot{background:#C0392B;box-shadow:0 0 6px rgba(192,57,43,.6);}
+  .sync-status.error .sync-label{color:rgba(192,57,43,.9);}
+  @keyframes syncPulse{from{opacity:.5}to{opacity:1;}}
 
   /* ── LAYOUT ── */
   main{display:flex;min-height:calc(100vh - 70px);}
@@ -316,6 +326,8 @@
     /* Header */
     header{padding:0 1rem;justify-content:space-between;}
     .logo{font-size:1rem;}
+    .sync-label{display:none;}
+    .sync-status{margin-right:.25rem;}
 
     /* Sidebar becomes a drawer */
     aside{
@@ -411,6 +423,10 @@
 
 <header>
   <div class="logo">Kathis & Andis <span>Rezept- und Essensplanung</span></div>
+  <div id="sync-status" class="sync-status" title="Google Sheets Synchronisation">
+    <span class="sync-dot"></span>
+    <span class="sync-label">–</span>
+  </div>
   <button class="mobile-menu-btn" onclick="openDrawer()" aria-label="Menü öffnen">☰</button>
 </header>
 
@@ -1451,6 +1467,21 @@ function deleteVorrat(id) {
 // ══════════════════════════════════════════
 // GOOGLE SHEETS — JSONP (funktioniert auch lokal, kein CORS-Problem)
 // ══════════════════════════════════════════
+// ── Sync-Status ──
+function setSync(state, label) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  el.className = 'sync-status ' + (state||'');
+  el.querySelector('.sync-label').textContent = label||'';
+}
+
+let syncWriteTimer;
+function setSyncWrite() {
+  setSync('loading', 'Speichern…');
+  clearTimeout(syncWriteTimer);
+  syncWriteTimer = setTimeout(() => setSync('ok', 'Gespeichert ✓'), 1800);
+}
+
 // ── API helper — alles über GET (wie LTB Monitor) ──
 async function apiGet(params) {
   if (!SCRIPT_URL) return null;
@@ -1473,6 +1504,7 @@ async function apiGet(params) {
 
 // ── Rezepte ──
 function syncRecipe(r, action) {
+  setSyncWrite();
   apiGet({
     sheet: 'rezepte', action,
     id: r.id,
@@ -1490,6 +1522,7 @@ function syncRecipe(r, action) {
 
 // ── Wochenplan ──
 function syncSlot(slotKey, entry) {
+  setSyncWrite();
   apiGet({
     sheet: 'wochenplan', action: 'set',
     slotkey:  encodeURIComponent(slotKey),
@@ -1523,7 +1556,9 @@ function syncVorrat(item, action) {
 
 // ── Laden aus Sheets ──
 async function tryLoadFromSheets() {
-  if (!SCRIPT_URL) return;
+  if (!SCRIPT_URL) { setSync('error', 'Kein Sheet'); return; }
+
+  setSync('loading', 'Laden…');
 
   // Kategorien laden
   const catData = await apiGet({ sheet: 'kategorien' });
@@ -1564,11 +1599,14 @@ async function tryLoadFromSheets() {
       });
       save(); renderSidebar(); renderGrid();
       showToast(`✅ ${recipes.length} Rezept${recipes.length!==1?'e':''} geladen`, 'success');
+      setSync('ok', `${recipes.length} Rezepte`);
     } else {
       showToast('⚠️ Sheet verbunden, aber keine Rezepte gefunden', '');
+      setSync('ok', 'Verbunden');
     }
   } else {
     showToast('⚠️ Sheets nicht erreichbar', 'error');
+    setSync('error', 'Nicht erreichbar');
   }
 
   // Wochenplan laden
