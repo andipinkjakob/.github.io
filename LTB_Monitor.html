@@ -1470,9 +1470,9 @@
     }));
     savePay(rules);
   }
-  async function apiPayAdd(r)    { await apiGet({ sheet:PAY_SHEET, action:'add',    id:r.id, threshold:r.threshold, amount:r.amount, dest:encodeURIComponent(r.dest), afterAC:r.afterAC??'', repeat:r.repeat, note:encodeURIComponent(r.note||''), done:r.done }); }
+  async function apiPayAdd(r)    { await apiGet({ sheet:PAY_SHEET, action:'add',    id:r.id, threshold:r.threshold, amount:r.amount, dest:encodeURIComponent(r.dest), afterAC:(r.afterAC !== null && r.afterAC !== undefined ? r.afterAC : ''), repeat:r.repeat, note:encodeURIComponent(r.note||''), done:r.done }); }
   async function apiPayDelete(id){ await apiGet({ sheet:PAY_SHEET, action:'delete', id }); }
-  async function apiPayUpdate(r) { await apiGet({ sheet:PAY_SHEET, action:'update', id:r.id, threshold:r.threshold, amount:r.amount, dest:encodeURIComponent(r.dest), afterAC:r.afterAC??'', repeat:r.repeat, note:encodeURIComponent(r.note||''), done:r.done }); }
+  async function apiPayUpdate(r) { await apiGet({ sheet:PAY_SHEET, action:'update', id:r.id, threshold:r.threshold, amount:r.amount, dest:encodeURIComponent(r.dest), afterAC:(r.afterAC !== null && r.afterAC !== undefined ? r.afterAC : ''), repeat:r.repeat, note:encodeURIComponent(r.note||''), done:r.done }); }
 
   let payFilter  = 'all';
   let payEditId  = null;
@@ -1564,7 +1564,7 @@
         payEditId = r.id;
         document.getElementById('payThreshold').value = r.threshold;
         document.getElementById('payAmount').value    = r.amount;
-        document.getElementById('payAfter').value     = r.afterAC ?? '';
+        document.getElementById('payAfter').value     = (r.afterAC !== null && r.afterAC !== undefined) ? r.afterAC : '';
         document.getElementById('payNote').value      = r.note || '';
         setPayDest(r.dest);
         _payRepeat = r.repeat;
